@@ -1,0 +1,13 @@
+version: '3'
+services:
+  ddns:
+    container_name: nip.io
+    image: gameframe.nip.io:latest
+    build:
+      context: .
+      dockerfile: Dockerfile
+    restart: unless-stopped
+    ports:
+      - "8080:80"
+    volumes:
+       - /var/run/docker.sock:/var/run/docker.sock
