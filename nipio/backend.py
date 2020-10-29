@@ -21,7 +21,7 @@ import sys
 
 
 def _is_debug():
-    return False
+    return True
 
 
 def _get_env_splitted(key, default=None, linesep=' ', pairsep='='):
