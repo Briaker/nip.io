@@ -95,6 +95,7 @@ class DynamicBackend(object):
         self.ip_address = ''
         self.ttl = ''
         self.name_servers = {}
+        self.subdomains = {}
         self.blacklisted_ips = []
         self.bits = '0';
         self.auth = '1';
@@ -126,6 +127,10 @@ class DynamicBackend(object):
         self.name_servers = dict(
             _get_env_splitted('NIPIO_NAMESERVERS', config.items('nameservers'))
         )
+        
+        if 'NIPIO_SUBDOMAINS' in os.environ or config.has_section("subdomains"):
+            for entry in config.items('subdomains'):
+                self.subdomains[entry[0]] = entry[1]
 
         if 'NIPIO_BLACKLIST' in os.environ or config.has_section("blacklist"):
             for entry in _get_env_splitted(
@@ -140,6 +145,7 @@ class DynamicBackend(object):
         _log(f'SOA: {self.soa}')
         _log(f'IP address: {self.ip_address}')
         _log(f'Domain: {self.domain}') 
+        _log(f'Subdomains: {self.subdomains}') 
         _log(f"Blacklist: {self.blacklisted_ips}")
 
     def run(self) -> None:
@@ -176,12 +182,15 @@ class DynamicBackend(object):
 
             qname = cmd[1].lower()
             qtype = cmd[3]
+            subdomain = self._get_subdomain(qname)
 
             if (qtype == 'A' or qtype == 'ANY') and qname.endswith(self.domain):
                 if qname == self.domain:
                     self.handle_self(self.domain)
                 elif qname in self.name_servers:
                     self.handle_nameservers(qname)
+                elif subdomain in self.subdomains:
+                    self.handle_mapped_subdomain(qname, subdomain)
                 else:
                     self.handle_subdomains(qname)
             elif qtype == 'SOA' and qname.endswith(self.domain):
@@ -197,8 +206,18 @@ class DynamicBackend(object):
         self.write_name_servers(name)
         _write('END')
 
+    def handle_mapped_subdomain(self, qname, subdomain):
+        ip_address = self.subdomain_map[subdomain]
+        if ip_address in self.blacklisted_ips:
+            self.handle_blacklisted(ip_address)
+            return
+
+        _write('DATA', qname, 'IN', 'A', self.ttl, self.id, '%s' % (ip_address))
+        self.write_name_servers(qname)
+        _write('END')
+
     def handle_subdomains(self, qname: str) -> None:
-        subdomain = qname[0 : qname.find(self.domain) - 1]
+        subdomain = self._get_subdomain(qname)
 
         subparts = self._split_subdomain(subdomain)
         if len(subparts) < 4:
@@ -256,6 +275,9 @@ class DynamicBackend(object):
     def handle_invalid_ip(self, ip_address: str) -> None:
         _write('LOG', f'Invalid IP address: {ip_address}')
         _write('END')
+
+    def _get_subdomain(self, qname):
+        return qname[0:qname.find(self.domain) - 1]
 
     def _get_config_filename(config_file: str) -> str:
         return os.path.join(os.path.dirname(os.path.realpath(__file__)), config_file)
