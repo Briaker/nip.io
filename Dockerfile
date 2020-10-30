@@ -1,4 +1,4 @@
-FROM alpine:3.7
+FROM python:3.7-alpine
 
 RUN apk add --no-cache pdns pdns-backend-pipe  pdns-backend-bind bind python2
 
