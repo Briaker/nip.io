@@ -155,8 +155,8 @@ class DynamicBackend(object):
         """
         _log('starting up')
         handshake = _get_next()
-        if handshake[1] != '5':
-            _log(f'Not version 5: {handshake}')
+        if handshake[1] != '1':
+            _log(f'Not version 1: {handshake}')
             sys.exit(1)
         _write('OK', 'nip.io backend - We are good')
         _log('Done handshake')
