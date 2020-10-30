@@ -8,6 +8,6 @@ services:
       dockerfile: Dockerfile
     restart: unless-stopped
     ports:
-      - "53:53/udp"
+      - "8086:80/udp"
     volumes:
        - ./pdns/bind:/etc/pdns/bind

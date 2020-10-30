@@ -4,7 +4,7 @@ RUN apk add --no-cache pdns pdns-backend-pipe  pdns-backend-bind bind python2
 
 ENV DOMAIN=local
 
-EXPOSE 53/tcp 53/udp
+EXPOSE 80/tcp 80/udp
 
 COPY nipio/backend.py /usr/local/bin
 RUN chmod +x /usr/local/bin/backend.py
