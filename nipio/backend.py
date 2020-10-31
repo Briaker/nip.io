@@ -202,11 +202,13 @@ class DynamicBackend(object):
         _write('END')
 
     def handle_self(self, name: str) -> None:
+        _log(f"handle_self: {name}")
         _write('DATA', self.bits, self.auth, name, 'IN', 'A', self.ttl, self.id, self.ip_address)
         self.write_name_servers(name)
         _write('END')
 
     def handle_mapped_subdomain(self, qname, subdomain):
+        _log(f"handling mapped subdomain: {subdomain} in {qname}")
         ip_address = self.subdomain_map[subdomain]
         if ip_address in self.blacklisted_ips:
             self.handle_blacklisted(ip_address)
@@ -217,6 +219,7 @@ class DynamicBackend(object):
         _write('END')
 
     def handle_subdomains(self, qname: str) -> None:
+        _log(f"handle_subdomains: {qname}")
         subdomain = self._get_subdomain(qname)
 
         subparts = self._split_subdomain(subdomain)
@@ -252,15 +255,18 @@ class DynamicBackend(object):
         _write('END')
 
     def handle_nameservers(self, qname: str) -> None:
+        _log(f"handle_nameservers: {qname}")
         ip = self.name_servers[qname]
         _write('DATA', self.bits, self.auth, qname, 'IN', 'A', self.ttl, self.id, ip)
         _write('END')
 
     def write_name_servers(self, qname: str) -> None:
+        _log(f"write_name_servers: {qname}")
         for name_server in self.name_servers:
             _write('DATA', self.bits, self.auth, qname, 'IN', 'NS', self.ttl, self.id, name_server)
 
     def handle_soa(self, qname: str) -> None:
+        _log(f"handle_soa: {qname}")
         _write('DATA', self.bits, self.auth, qname, 'IN', 'SOA', self.ttl, self.id, self.soa)
         _write('END')
 
